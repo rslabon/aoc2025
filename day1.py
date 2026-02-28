@@ -27,21 +27,25 @@ def rotate(dial, rotation):
     zero_count = 0
     if rotation > 0:
         while rotation > 0:
-            dial += 1
+            d = min(100 - dial, rotation)
+            dial += d
             if dial == 100:
                 dial = 0
                 zero_count += 1
 
-            rotation -= 1
+            rotation -= d
     elif rotation < 0:
         while rotation < 0:
-            dial -= 1
+            if dial > 0:
+                d = min(dial, -rotation)
+            else:
+                d = min(100, -rotation)
+            dial -= d
+            dial %= 100
             if dial == 0:
                 zero_count += 1
-            if dial == -1:
-                dial = 99
 
-            rotation += 1
+            rotation += d
 
     return dial, zero_count
 
