@@ -23,12 +23,19 @@ def find_invalid(start, end):
     return result
 
 
-def partition_by_size(list, size):
-    result = []
-    for i in range(0, len(list), size):
-        result.append(list[i:i + size])
+def has_duplicates(list, size):
+    if len(list) % size != 0:
+        return False
+    for j in range(0, size):
+        v = None
+        for i in range(0 + j, len(list), size):
+            if v is None:
+                v = list[i]
+                continue
+            if v != list[i]:
+                return False
 
-    return result
+    return True
 
 
 def find_invalid2(start, end):
@@ -36,8 +43,7 @@ def find_invalid2(start, end):
     for n in range(start, end + 1):
         s = str(n)
         for size in range(1, 1 + len(s) // 2):
-            sublists = partition_by_size(s, size)
-            if len(set(sublists)) == 1:
+            if has_duplicates(s, size):
                 result.add(n)
 
     return result
