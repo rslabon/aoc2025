@@ -1,3 +1,5 @@
+import math
+
 with open("./resources/day1.txt") as f:
     data = f.read()
 
@@ -25,27 +27,23 @@ def part1():
 
 def rotate(dial, rotation):
     zero_count = 0
+
     if rotation > 0:
-        while rotation > 0:
-            d = min(100 - dial, rotation)
-            dial += d
-            if dial == 100:
-                dial = 0
-                zero_count += 1
+        dial += rotation
+        zero_count = int(dial / 100)
+        dial %= 100
 
-            rotation -= d
     elif rotation < 0:
-        while rotation < 0:
-            if dial > 0:
-                d = min(dial, -rotation)
-            else:
-                d = min(100, -rotation)
-            dial -= d
-            dial %= 100
+        if dial > 0 and (dial + rotation) % 100 > (dial + rotation) and abs(rotation) < 100:
+            zero_count += 1
+        elif dial + rotation < 0:
+            zero_count += math.ceil((-rotation - dial) / 100)
             if dial == 0:
-                zero_count += 1
+                zero_count -= 1
 
-            rotation += d
+        dial = (dial + rotation) % 100
+        if dial == 0:
+            zero_count += 1
 
     return dial, zero_count
 
