@@ -12,13 +12,33 @@ for part in data.split(","):
 
 
 def find_invalid(start, end):
-    result = []
+    result = set()
     for n in range(start, end + 1):
         s = str(n)
         if len(s) % 2 == 0:
             mid = len(s) // 2
             if s[0:mid] == s[mid:]:
-                result.append(n)
+                result.add(n)
+
+    return result
+
+
+def partition_by_size(list, size):
+    result = []
+    for i in range(0, len(list), size):
+        result.append(list[i:i + size])
+
+    return result
+
+
+def find_invalid2(start, end):
+    result = set()
+    for n in range(start, end + 1):
+        s = str(n)
+        for size in range(1, 1 + len(s) // 2):
+            sublists = partition_by_size(s, size)
+            if len(set(sublists)) == 1:
+                result.add(n)
 
     return result
 
@@ -31,4 +51,13 @@ def part1():
     print(sum(invalid))
 
 
+def part2():
+    invalid = []
+    for start, end in ranges:
+        invalid += find_invalid2(start, end)
+
+    print(sum(invalid))
+
+
 part1()
+part2()
