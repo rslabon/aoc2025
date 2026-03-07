@@ -8,6 +8,11 @@ data = """
 with open("./resources/day3.txt") as f:
     data = f.read()
 
+banks = []
+for line in data.strip().split("\n"):
+    bank = [int(c) for c in line]
+    banks.append(bank)
+
 
 def find_max(bank):
     largest = float("-inf")
@@ -20,23 +25,36 @@ def find_max(bank):
     return index, largest
 
 
-def find_largest_joltage(bank):
-    first_index, first_value = find_max(bank[0:-1])
-    _, second_value = find_max(bank[first_index + 1:])
-    return int(f"{first_value}{second_value}")
+def find_largest_joltage(bank, number_of_batteries):
+    values = []
+    index = 0
+    for i in range(1, number_of_batteries + 1):
+        if i == number_of_batteries:
+            _, value = find_max(bank[index:])
+        else:
+            idx, value = find_max(bank[index:-number_of_batteries + i])
+            index += idx + 1
+
+        values.append(value)
+
+    return int("".join(map(str, values)))
 
 
 def part1():
-    banks = []
-    for line in data.strip().split("\n"):
-        bank = [int(c) for c in line]
-        banks.append(bank)
-
     total = 0
     for bank in banks:
-        total += find_largest_joltage(bank)
+        total += find_largest_joltage(bank, 2)
+
+    print(total)
+
+
+def part2():
+    total = 0
+    for bank in banks:
+        total += find_largest_joltage(bank, 12)
 
     print(total)
 
 
 part1()
+part2()
