@@ -32,8 +32,8 @@ def find_largest_joltage(bank, number_of_batteries):
         if i == number_of_batteries:
             _, digit = find_max(bank[index:])
         else:
-            idx, digit = find_max(bank[index:-number_of_batteries + i])
-            index += idx + 1
+            digit_index, digit = find_max(bank[index:-number_of_batteries + i])
+            index += digit_index + 1
 
         value += digit * 10 ** (number_of_batteries - i)
 
