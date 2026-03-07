@@ -26,18 +26,18 @@ def find_max(bank):
 
 
 def find_largest_joltage(bank, number_of_batteries):
-    values = []
+    value = 0
     index = 0
     for i in range(1, number_of_batteries + 1):
         if i == number_of_batteries:
-            _, value = find_max(bank[index:])
+            _, digit = find_max(bank[index:])
         else:
-            idx, value = find_max(bank[index:-number_of_batteries + i])
+            idx, digit = find_max(bank[index:-number_of_batteries + i])
             index += idx + 1
 
-        values.append(value)
+        value += digit * 10 ** (number_of_batteries - i)
 
-    return int("".join(map(str, values)))
+    return value
 
 
 def part1():
