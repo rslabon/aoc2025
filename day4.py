@@ -14,19 +14,18 @@ data = """
 with open("./resources/day4.txt") as f:
     data = f.read()
 
-paper_positions = set()
-max_row = 0
-max_column = 0
-for row, line in enumerate(data.strip().split("\n")):
-    max_row = max(max_row, row)
-    for column, char in enumerate(line):
-        max_column = max(max_column, column)
-        if char == "@":
-            paper_positions.add((row, column))
+def get_paper_positions():
+    paper_positions = set()
+    for row, line in enumerate(data.strip().split("\n")):
+        for column, char in enumerate(line):
+            if char == "@":
+                paper_positions.add((row, column))
+
+    return paper_positions
 
 
-def part1():
-    rolls = 0
+def find_rolls_to_remove(paper_positions):
+    removed = set()
     for (row, column) in paper_positions:
         adj = 0
         for r, c in [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]:
@@ -34,9 +33,29 @@ def part1():
                 adj += 1
 
         if adj < 4:
-            rolls += 1
+            removed.add((row, column))
 
-    print(rolls)
+    return removed
+
+
+def part1():
+    removed = find_rolls_to_remove(get_paper_positions())
+    print(len(removed))
+
+
+def part2():
+    total = 0
+    paper_positions = get_paper_positions()
+    while True:
+        removed = find_rolls_to_remove(paper_positions)
+        if len(removed) == 0:
+            break
+
+        total += len(removed)
+        paper_positions = paper_positions - removed
+
+    print(total)
 
 
 part1()
+part2()
