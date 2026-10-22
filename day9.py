@@ -59,8 +59,8 @@ def part2():
             p3 = (p2[0], p1[1])
             p4 = (p1[0], p2[1])
 
-            polygon = Polygon([p1, p2, p3, p4]).convex_hull
-            if shapely.covered_by(polygon, boundry):
+            rectangle = Polygon([p1, p2, p3, p4]).convex_hull
+            if shapely.covered_by(rectangle, boundry):
                 max_area = max(max_area, area(p1, p2))
 
             j += 1
