@@ -104,4 +104,21 @@ def part1():
     print(total)
 
 
+def part2():
+    closest = find_closest()
+    uf = UnionFind(boxes)
+
+    for _, box, other_box in closest:
+        if uf.is_connected(box, other_box):
+            continue
+
+        uf.union(box, other_box)
+        circuits = [s for s in uf.size.values() if s > 0]
+        counter = Counter(circuits)
+        if len(counter.items()) == 1:
+            print(box[0] * other_box[0])
+            break
+
+
 part1()
+part2()
