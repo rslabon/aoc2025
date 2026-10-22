@@ -54,11 +54,11 @@ class UnionFind:
         if self.size[p_root] < self.size[q_root]:
             self.id[p_root] = q_root
             self.size[q_root] += self.size[p_root]
-            self.size[p_root] = 0
+            del self.size[p_root]
         else:
             self.id[q_root] = p_root
             self.size[p_root] += self.size[q_root]
-            self.size[q_root] = 0
+            del self.size[q_root]
 
 
 for line in data.split("\n"):
@@ -96,8 +96,7 @@ def part1():
 
         uf.union(box, other_box)
 
-    circuits = [s for s in uf.size.values() if s > 0]
-    counter = Counter(circuits)
+    counter = Counter(uf.size.values())
     biggest = list(sorted(counter.items(), key=lambda i: i[0], reverse=True))
     biggest = [b[0] for b in biggest[0:3]]
     total = reduce(lambda a, b: a * b, biggest, 1)
@@ -113,8 +112,7 @@ def part2():
             continue
 
         uf.union(box, other_box)
-        circuits = [s for s in uf.size.values() if s > 0]
-        counter = Counter(circuits)
+        counter = Counter(uf.size.values())
         if len(counter.items()) == 1:
             print(box[0] * other_box[0])
             break
