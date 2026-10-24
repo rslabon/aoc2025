@@ -1,4 +1,5 @@
 import heapq
+from collections import defaultdict
 from functools import cache
 
 data = """
@@ -19,45 +20,104 @@ for line in data.strip().split("\n"):
 
     lights = lights.replace("[", "").replace("]", "")
     lights = tuple([True if l == "#" else False for l in lights])
-    buttons = tuple([eval(b) for b in buttons])
+
+    buttons = [eval(b) for b in buttons]
+    buttons = tuple([b if type(b) is tuple else (b,) for b in buttons])
+
+    joltage = joltage.replace("{", "").replace("}", "").split(",")
+    joltage = tuple([int(j) for j in joltage])
+
     machines.append((lights, buttons, joltage))
 
 
-@cache
-def toggle(machine, button):
-    state = list(machine)
-    if type(button) is tuple:
-        for b in button:
-            state[b] = not state[b]
-    else:
-        state[button] = not state[button]
+def toggle_lights(current_state, button):
+    state = list(current_state)
+    for b in button:
+        state[b] = not state[b]
 
     return tuple(state)
 
 
-def find(lights, buttons):
+def find_lights(lights, buttons):
     min_sofar = float("inf")
 
     init_state = tuple([False] * len(lights))
-    q = [(0, init_state, lights, buttons, set())]
+    q = [(0, init_state, buttons, set())]
     heapq.heapify(q)
 
     while q:
-        pressed, machine, lights, buttons, seen = heapq.heappop(q)
+        pressed, state, buttons, seen = heapq.heappop(q)
 
         if pressed >= min_sofar:
             continue
 
-        if machine == lights:
+        if state == lights:
             min_sofar = min(min_sofar, pressed)
             return min_sofar
 
-        if machine in seen:
+        if state in seen:
             continue
 
         for button in buttons:
             heapq.heappush(q,
-                           (pressed + 1, toggle(machine, button), lights, buttons[1:] + buttons[:1], seen | {machine}))
+                           (pressed + 1, toggle_lights(state, button), buttons[1:] + buttons[:1], seen | {state}))
+
+    return min_sofar
+
+
+@cache
+def toggle_joltage(current_state, button, n=1):
+    state = list(current_state)
+    for b in button:
+        state[b] += n
+
+    return tuple(state)
+
+
+@cache
+def distance_to_joltage(state, joltage):
+    d = [float("inf")] * len(state)
+    for i, _ in enumerate(state):
+        if state[i] <= joltage[i]:
+            d[i] = (joltage[i] - state[i]) ** 2
+
+    return sum(d)
+
+
+def find_joltage(joltage, buttons):
+    min_sofar = float("inf")
+
+    init_state = tuple([0] * len(joltage))
+    q = [(0, 0, init_state, buttons, {})]
+    heapq.heapify(q)
+    cache = defaultdict(lambda: float("inf"))
+
+    tick = 0
+    while q:
+        distance, pressed, state, buttons, acc = heapq.heappop(q)
+
+        if cache[state] <= distance:
+            continue
+
+        cache[state] = distance
+
+        tick += 1
+
+        if pressed >= min_sofar:
+            continue
+
+        if state == joltage:
+            min_sofar = min(min_sofar, pressed)
+            print(f"took {tick}", min_sofar, acc)
+            return min_sofar
+
+        for button in buttons:
+            new_state = toggle_joltage(state, button)
+            new_distance = distance_to_joltage(new_state, joltage)
+            if new_distance != float("inf"):
+                new_acc = dict(acc)
+                new_acc[button] = new_acc.get(button, 0) + 1
+                heapq.heappush(q, (new_distance, pressed + 1, new_state, buttons[1:] + buttons[:1], new_acc))
 
     return min_sofar
 
@@ -66,9 +126,21 @@ def part1():
     total = 0
     for machine in machines:
         lights, buttons, _ = machine
-        total += find(lights, buttons)
+        total += find_lights(lights, buttons)
 
     print(total)
 
 
-part1()
+def part2():
+    total = 0
+    # for i, machine in enumerate(machines):
+    #     _, buttons, joltage = machine
+    _, buttons, joltage = machines[2]
+    total += find_joltage(joltage, buttons)
+    # print(f"done {i + 1}/{len(machines)}")
+
+    print(total)
+
+
+# part1()
+part2()
