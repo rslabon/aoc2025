@@ -1,6 +1,5 @@
 import heapq
 from collections import defaultdict
-from functools import cache
 
 data = """
 [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
@@ -65,7 +64,6 @@ def find_lights(lights, buttons):
     return min_sofar
 
 
-@cache
 def toggle_joltage(current_state, button, n=1):
     state = list(current_state)
     for b in button:
@@ -74,14 +72,61 @@ def toggle_joltage(current_state, button, n=1):
     return tuple(state)
 
 
-@cache
 def distance_to_joltage(state, joltage):
     d = [float("inf")] * len(state)
     for i, _ in enumerate(state):
         if state[i] <= joltage[i]:
-            d[i] = (joltage[i] - state[i]) ** 2
+            d[i] = (joltage[i] - state[i]) ** 100
 
     return sum(d)
+
+
+def is_valid(state, joltage, buttons):
+    gap = [0] * len(state)
+    for j, _ in enumerate(state):
+        if state[j] <= joltage[j]:
+            gap[j] = (joltage[j] - state[j])
+        else:
+            return False
+
+    for j, _ in enumerate(joltage):
+        if gap[j] == 0:
+            continue
+        possible_buttons = [set(button) for button in buttons if j in button]
+        buttons_pressed_togather = set(list(possible_buttons)[0])
+        for button in possible_buttons:
+            buttons_pressed_togather = buttons_pressed_togather.intersection(button)
+
+        if buttons_pressed_togather:
+            new_state = toggle_joltage(state, buttons_pressed_togather, gap[j])
+            distance = distance_to_joltage(new_state, joltage)
+            if distance == float("inf"):
+                return False
+
+        can_press = False
+        for button in possible_buttons:
+            new_state = toggle_joltage(state, button, min(gap[j], 1))
+            distance = distance_to_joltage(new_state, joltage)
+            if distance != float("inf"):
+                can_press = can_press or True
+
+        if not can_press:
+            return False
+
+    return True
+
+
+def only_possible_buttons(joltage, state, buttons):
+    result = list(buttons)
+    for j, _ in enumerate(joltage):
+        possible_buttons = [button for button in buttons if j in button]
+        for button in possible_buttons:
+            new_state = toggle_joltage(state, button, 1)
+            distance = distance_to_joltage(new_state, joltage)
+            if distance == float("inf"):
+                result = [b for b in buttons if b != button]
+
+    return result
 
 
 def find_joltage(joltage, buttons):
@@ -96,10 +141,11 @@ def find_joltage(joltage, buttons):
     while q:
         distance, pressed, state, buttons = heapq.heappop(q)
 
-        if cache[state] <= pressed:
-            continue
-
-        cache[state] = pressed
+        d = [0] * len(state)
+        for i, _ in enumerate(state):
+            if state[i] <= joltage[i]:
+                d[i] = (joltage[i] - state[i])
+        print(d, state, joltage)
 
         tick += 1
 
@@ -112,10 +158,17 @@ def find_joltage(joltage, buttons):
             return min_sofar
 
         for button in buttons:
+            new_pressed = pressed + 1
             new_state = toggle_joltage(state, button)
             new_distance = distance_to_joltage(new_state, joltage)
-            if new_distance != float("inf"):
-                heapq.heappush(q, (new_distance, pressed + 1, new_state, (buttons[1:] + buttons[:1])))
+            if new_pressed < cache[new_state] \
+                    and new_distance != float("inf") \
+                    and is_valid(new_state, joltage, buttons):
+                new_buttons = only_possible_buttons(joltage, new_state, buttons)
+                if not new_buttons:
+                    continue
+                cache[new_state] = new_pressed
+                heapq.heappush(q, (new_pressed + new_distance, new_pressed, new_state, new_buttons))
 
     return min_sofar
 
