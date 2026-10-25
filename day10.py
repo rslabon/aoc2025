@@ -88,18 +88,18 @@ def find_joltage(joltage, buttons):
     min_sofar = float("inf")
 
     init_state = tuple([0] * len(joltage))
-    q = [(0, 0, init_state, buttons, {})]
+    q = [(0, 0, init_state, buttons)]
     heapq.heapify(q)
     cache = defaultdict(lambda: float("inf"))
 
     tick = 0
     while q:
-        distance, pressed, state, buttons, acc = heapq.heappop(q)
+        distance, pressed, state, buttons = heapq.heappop(q)
 
-        if cache[state] <= distance:
+        if cache[state] <= pressed:
             continue
 
-        cache[state] = distance
+        cache[state] = pressed
 
         tick += 1
 
@@ -108,16 +108,14 @@ def find_joltage(joltage, buttons):
 
         if state == joltage:
             min_sofar = min(min_sofar, pressed)
-            print(f"took {tick}", min_sofar, acc)
+            print(f"took {tick}", min_sofar)
             return min_sofar
 
         for button in buttons:
             new_state = toggle_joltage(state, button)
             new_distance = distance_to_joltage(new_state, joltage)
             if new_distance != float("inf"):
-                new_acc = dict(acc)
-                new_acc[button] = new_acc.get(button, 0) + 1
-                heapq.heappush(q, (new_distance, pressed + 1, new_state, buttons[1:] + buttons[:1], new_acc))
+                heapq.heappush(q, (new_distance, pressed + 1, new_state, (buttons[1:] + buttons[:1])))
 
     return min_sofar
 
@@ -133,11 +131,10 @@ def part1():
 
 def part2():
     total = 0
-    # for i, machine in enumerate(machines):
-    #     _, buttons, joltage = machine
-    _, buttons, joltage = machines[2]
-    total += find_joltage(joltage, buttons)
-    # print(f"done {i + 1}/{len(machines)}")
+    for i, machine in enumerate(machines):
+        _, buttons, joltage = machine
+        total += find_joltage(joltage, buttons)
+        print(f"done {i + 1}/{len(machines)}")
 
     print(total)
 
