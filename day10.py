@@ -1,5 +1,6 @@
 import heapq
-from collections import defaultdict
+
+import sympy as sp
 
 data = """
 [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
@@ -64,113 +65,78 @@ def find_lights(lights, buttons):
     return min_sofar
 
 
-def toggle_joltage(current_state, button, n=1):
-    state = list(current_state)
-    for b in button:
-        state[b] += n
-
-    return tuple(state)
-
-
-def distance_to_joltage(state, joltage):
-    d = [float("inf")] * len(state)
-    for i, _ in enumerate(state):
-        if state[i] <= joltage[i]:
-            d[i] = (joltage[i] - state[i]) ** 100
-
-    return sum(d)
-
-
-def is_valid(state, joltage, buttons):
-    gap = [0] * len(state)
-    for j, _ in enumerate(state):
-        if state[j] <= joltage[j]:
-            gap[j] = (joltage[j] - state[j])
-        else:
-            return False
-
-    for j, _ in enumerate(joltage):
-        if gap[j] == 0:
-            continue
-        possible_buttons = [set(button) for button in buttons if j in button]
-        buttons_pressed_togather = set(list(possible_buttons)[0])
-        for button in possible_buttons:
-            buttons_pressed_togather = buttons_pressed_togather.intersection(button)
-
-        if buttons_pressed_togather:
-            new_state = toggle_joltage(state, buttons_pressed_togather, gap[j])
-            distance = distance_to_joltage(new_state, joltage)
-            if distance == float("inf"):
-                return False
-
-        can_press = False
-        for button in possible_buttons:
-            new_state = toggle_joltage(state, button, min(gap[j], 1))
-            distance = distance_to_joltage(new_state, joltage)
-            if distance != float("inf"):
-                can_press = can_press or True
-
-        if not can_press:
-            return False
-
-    return True
-
-
-def only_possible_buttons(joltage, state, buttons):
-    result = list(buttons)
-    for j, _ in enumerate(joltage):
-        possible_buttons = [button for button in buttons if j in button]
-        for button in possible_buttons:
-            new_state = toggle_joltage(state, button, 1)
-            distance = distance_to_joltage(new_state, joltage)
-            if distance == float("inf"):
-                result = [b for b in buttons if b != button]
-
-    return result
-
-
 def find_joltage(joltage, buttons):
-    min_sofar = float("inf")
+    symbols = sp.symbols('a:z', integer=True)[0:len(buttons)]
+    button_to_symbols = dict([(b, s) for b, s in zip(buttons, symbols)])
+    eqs = []
+    for i, _ in enumerate(joltage):
+        cell = None
+        possible_buttons = [button for button in buttons if i in button]
+        for button in possible_buttons:
+            if cell:
+                cell += button_to_symbols[button]
+            else:
+                cell = button_to_symbols[button]
 
-    init_state = tuple([0] * len(joltage))
-    q = [(0, 0, init_state, buttons)]
-    heapq.heapify(q)
-    cache = defaultdict(lambda: float("inf"))
+        cell -= joltage[i]
+        eqs.append(cell)
 
-    tick = 0
-    while q:
-        distance, pressed, state, buttons = heapq.heappop(q)
+    solution = sp.solve(eqs, symbols, dict=True)[0]
 
-        d = [0] * len(state)
-        for i, _ in enumerate(state):
-            if state[i] <= joltage[i]:
-                d[i] = (joltage[i] - state[i])
-        print(d, state, joltage)
+    free_syms = set()
+    for s in [v.free_symbols for v in solution.values()]:
+        free_syms |= s
+    free_syms = list(free_syms)
 
-        tick += 1
+    total_min = float("inf")
+    if free_syms:
+        if len(free_syms) == 1:
+            for v1 in range(0, max(joltage)):
+                current = {}
+                for var, expr in solution.items():
+                    current[var] = expr.subs(free_syms[0], v1)
+                current[free_syms[0]] = v1
 
-        if pressed >= min_sofar:
-            continue
+                if all([True if 0 <= v == int(v) else False for v in current.values()]):
+                    total_min = min(total_min, sum(current.values()))
 
-        if state == joltage:
-            min_sofar = min(min_sofar, pressed)
-            print(f"took {tick}", min_sofar)
-            return min_sofar
+        elif len(free_syms) == 2:
+            limit = min(50, max(joltage) // 2)
+            for v1 in range(0, limit):
+                for v2 in range(0, limit):
+                    current = {}
+                    for var, expr in solution.items():
+                        current[var] = expr.subs(free_syms[0], v1).subs(free_syms[1], v2)
+                        if current[var] < 0 or int(current[var]) != current[var]:
+                            break
+                    current[free_syms[0]] = v1
+                    current[free_syms[1]] = v2
 
-        for button in buttons:
-            new_pressed = pressed + 1
-            new_state = toggle_joltage(state, button)
-            new_distance = distance_to_joltage(new_state, joltage)
-            if new_pressed < cache[new_state] \
-                    and new_distance != float("inf") \
-                    and is_valid(new_state, joltage, buttons):
-                new_buttons = only_possible_buttons(joltage, new_state, buttons)
-                if not new_buttons:
-                    continue
-                cache[new_state] = new_pressed
-                heapq.heappush(q, (new_pressed + new_distance, new_pressed, new_state, new_buttons))
+                    if all([True if 0 <= v == int(v) else False for v in current.values()]):
+                        total_min = min(total_min, sum(current.values()))
 
-    return min_sofar
+        elif len(free_syms) == 3:
+            limit = min(50, max(joltage) // 3)
+            for v1 in range(0, limit):
+                for v2 in range(0, limit):
+                    for v3 in range(0, limit):
+                        current = {}
+                        for var, expr in solution.items():
+                            current[var] = expr.subs(free_syms[0], v1).subs(free_syms[1], v2).subs(free_syms[2], v3)
+                            if current[var] < 0 or int(current[var]) != current[var]:
+                                break
+                        current[free_syms[0]] = v1
+                        current[free_syms[1]] = v2
+                        current[free_syms[2]] = v3
+
+                        if all([True if 0 <= v == int(v) else False for v in current.values()]):
+                            total_min = min(total_min, sum(current.values()))
+        else:
+            raise f"ERROR {len(free_syms)} too many free symbols!"
+    else:
+        total_min = sum(solution.values())
+
+    return total_min
 
 
 def part1():
@@ -192,5 +158,5 @@ def part2():
     print(total)
 
 
-# part1()
+part1()
 part2()
