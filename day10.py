@@ -91,43 +91,43 @@ def find_joltage(joltage, buttons):
     total_min = float("inf")
     if free_syms:
         if len(free_syms) == 1:
-            for v1 in range(0, max(joltage)):
+            for v0 in range(0, max(joltage)):
                 current = {}
                 for var, expr in solution.items():
-                    current[var] = expr.subs(free_syms[0], v1)
-                current[free_syms[0]] = v1
+                    current[var] = expr.subs(free_syms[0], v0)
+                current[free_syms[0]] = v0
 
                 if all([True if 0 <= v == int(v) else False for v in current.values()]):
                     total_min = min(total_min, sum(current.values()))
 
         elif len(free_syms) == 2:
             limit = min(50, max(joltage) // 2)
-            for v1 in range(0, limit):
-                for v2 in range(0, limit):
+            for v0 in range(0, limit):
+                for v1 in range(0, limit):
                     current = {}
                     for var, expr in solution.items():
-                        current[var] = expr.subs(free_syms[0], v1).subs(free_syms[1], v2)
+                        current[var] = expr.subs(free_syms[0], v0).subs(free_syms[1], v1)
                         if current[var] < 0 or int(current[var]) != current[var]:
                             break
-                    current[free_syms[0]] = v1
-                    current[free_syms[1]] = v2
+                    current[free_syms[0]] = v0
+                    current[free_syms[1]] = v1
 
                     if all([True if 0 <= v == int(v) else False for v in current.values()]):
                         total_min = min(total_min, sum(current.values()))
 
         elif len(free_syms) == 3:
             limit = min(50, max(joltage) // 3)
-            for v1 in range(0, limit):
-                for v2 in range(0, limit):
-                    for v3 in range(0, limit):
+            for v0 in range(0, limit):
+                for v1 in range(0, limit):
+                    for v2 in range(0, limit):
                         current = {}
                         for var, expr in solution.items():
-                            current[var] = expr.subs(free_syms[0], v1).subs(free_syms[1], v2).subs(free_syms[2], v3)
+                            current[var] = expr.subs(free_syms[0], v0).subs(free_syms[1], v1).subs(free_syms[2], v2)
                             if current[var] < 0 or int(current[var]) != current[var]:
                                 break
-                        current[free_syms[0]] = v1
-                        current[free_syms[1]] = v2
-                        current[free_syms[2]] = v3
+                        current[free_syms[0]] = v0
+                        current[free_syms[1]] = v1
+                        current[free_syms[2]] = v2
 
                         if all([True if 0 <= v == int(v) else False for v in current.values()]):
                             total_min = min(total_min, sum(current.values()))
@@ -141,21 +141,28 @@ def find_joltage(joltage, buttons):
 
 def part1():
     total = 0
-    for machine in machines:
+    print(f"part1", end="")
+    for i, machine in enumerate(machines):
         lights, buttons, _ = machine
         total += find_lights(lights, buttons)
+        if i % 80 == 0:
+            print()
+        print(f".", end="")
 
-    print(total)
+    print(f"={total}")
 
 
 def part2():
     total = 0
+    print(f"part2", end="")
     for i, machine in enumerate(machines):
         _, buttons, joltage = machine
         total += find_joltage(joltage, buttons)
-        print(f"done {i + 1}/{len(machines)}")
+        if i % 80 == 0:
+            print()
+        print(f".", end="")
 
-    print(total)
+    print(f"={total}")
 
 
 part1()
