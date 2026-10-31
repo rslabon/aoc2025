@@ -1,4 +1,5 @@
 import heapq
+from collections import defaultdict
 
 import sympy as sp
 
@@ -42,25 +43,28 @@ def find_lights(lights, buttons):
     min_sofar = float("inf")
 
     init_state = tuple([False] * len(lights))
-    q = [(0, init_state, buttons, set())]
+    q = [(0, init_state, buttons)]
+    seen  = defaultdict(lambda : float("inf"))
     heapq.heapify(q)
 
     while q:
-        pressed, state, buttons, seen = heapq.heappop(q)
+        pressed, state, buttons = heapq.heappop(q)
 
         if pressed >= min_sofar:
             continue
+
+        if pressed >= seen[state]:
+            continue
+
+        seen[state] = pressed
 
         if state == lights:
             min_sofar = min(min_sofar, pressed)
             return min_sofar
 
-        if state in seen:
-            continue
-
         for button in buttons:
             heapq.heappush(q,
-                           (pressed + 1, toggle_lights(state, button), buttons[1:] + buttons[:1], seen | {state}))
+                           (pressed + 1, toggle_lights(state, button), buttons[1:] + buttons[:1]))
 
     return min_sofar
 
@@ -141,15 +145,11 @@ def find_joltage(joltage, buttons):
 
 def part1():
     total = 0
-    print(f"part1", end="")
     for i, machine in enumerate(machines):
         lights, buttons, _ = machine
         total += find_lights(lights, buttons)
-        if i % 80 == 0:
-            print()
-        print(f".", end="")
 
-    print(f"={total}")
+    print(f"part1={total}")
 
 
 def part2():
