@@ -67,12 +67,9 @@ for line in data.strip().split("\n"):
 cache = {}
 
 
-def count_paths(from_id, to_id, path=[]):
+def count_paths(from_id, to_id):
     if from_id == to_id:
         return 1
-
-    if from_id in path:
-        return 0
 
     if (from_id, to_id) in cache:
         return cache[(from_id, to_id)]
@@ -81,7 +78,7 @@ def count_paths(from_id, to_id, path=[]):
 
     c = 0
     for other in node.children:
-        c += count_paths(other.id, to_id, path + [from_id])
+        c += count_paths(other.id, to_id)
 
     cache[(from_id, to_id)] = c
 
